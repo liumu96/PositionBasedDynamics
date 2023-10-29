@@ -13,7 +13,10 @@ ENDIF(NOT CMAKE_BUILD_TYPE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set(Sources src/main.cpp)
+set(Sources 
+    src/main.cpp
+    src/window.cpp
+)
 
 INCLUDE_DIRECTORIES(/System/Library/Frameworks)
 # find OpenGL, GLUT, GLEW
@@ -31,15 +34,20 @@ find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 # set(OpenMesh_DIR /opt/homebrew/Cellar/open-mesh/9.0/lib) # if necessary
 find_package(OpenMesh REQUIRED)
 
-include_directories(/opt/homebrew/include)
+include_directories( /opt/homebrew/include)
+
+# copy shaders to binary directory
+# file(INSTALL ClothSimulation/shaders/ DESTINATION shaders/)
 
 add_executable(position-based-dynamics ${Sources})
 
+add_library(GLAD "src/glad.c")
 
 target_link_libraries(position-based-dynamics 
     ${OPENGL_LIBRARIES} 
     ${GLFW3_LIBRARY} 
     ${GLEW_LIBRARY} 
     ${OPENMESH_CORE_LIBRARY}
+    GLAD
     glm::glm
     Eigen3::Eigen)
