@@ -1,53 +1,32 @@
-cmake_minimum_required(VERSION 3.0)
-cmake_policy(VERSION 3.0)
+cmake_minimum_required(VERSION 3.16)
 
 project(position-based-dynamics)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS ON)
+# set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
-IF(NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build (Debug or Release)" FORCE)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+# Libigl
+include(libigl)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# find_package(LIBIGL REQUIRED QUIET)
 
-set(Sources 
-    src/main.cpp
-    src/window.cpp
-)
+# setup libigl properly
+igl_include(opengl)
+igl_include(glfw)
+igl_include(imgui)
 
-INCLUDE_DIRECTORIES(/System/Library/Frameworks)
-# find OpenGL, GLUT, GLEW
-find_package(OpenGL REQUIRED)
-find_package(GLFW3 REQUIRED)
-find_package(GLEW REQUIRED)
 
-# find glm
-set(glm_DIR /opt/homebrew/Cellar/glm/0.9.9.8/lib/cmake/glm) # if necessary
-find_package(glm REQUIRED)
+# include directories
+include_directories(${PROJECT_SOURCE_DIR}/shared/include)
+include_directories(${PROJECT_SOURCE_DIR}/include)
+include_directories(${LIBIGL_INCLUDE_DIR})
 
-set(glm_DIR /opt/homebrew/Cellar/eigen/3.4.0_1/share/eigen3/cmake)
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+# include source code
+file(GLOB H_FILES ${PROJECT_SOURCE_DIR}/include/*.h)
+file(GLOB H_SHARED_FILES ${PROJECT_SOURCE_DIR}/shared/include/*.h)
+file(GLOB CPP_FILES ${PROJECT_SOURCE_DIR}/src/*.cpp)
+file(GLOB CPP_SHARED_FILES ${PROJECT_SOURCE_DIR}/shared/src/*.cpp)
 
-# set(OpenMesh_DIR /opt/homebrew/Cellar/open-mesh/9.0/lib) # if necessary
-find_package(OpenMesh REQUIRED)
-
-include_directories( /opt/homebrew/include)
-
-# copy shaders to binary directory
-# file(INSTALL ClothSimulation/shaders/ DESTINATION shaders/)
-
-add_executable(position-based-dynamics ${Sources})
-
-add_library(GLAD "src/glad.c")
-
-target_link_libraries(position-based-dynamics 
-    ${OPENGL_LIBRARIES} 
-    ${GLFW3_LIBRARY} 
-    ${GLEW_LIBRARY} 
-    ${OPENMESH_CORE_LIBRARY}
-    GLAD
-    glm::glm
-    Eigen3::Eigen)
+# build executable
+add_executable(${PROJECT_NAME} main.cpp ${H_FILES} ${H_SHARED_FILES} ${CPP_FILES} ${CPP_SHARED_FILES})
+target_link_libraries(${PROJECT_NAME} PUBLIC igl::opengl igl::glfw igl::imgui)
