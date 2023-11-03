@@ -48,8 +48,6 @@ int main(int argc, char **argv)
     Eigen::MatrixXi F_bunny;
 
     // read model
-    // igl::readOBJ("../data/spot.obj", V_cow, F_cow);
-    // igl::readOBJ("../data/spring.obj", V_spring, F_spring);
     igl::readOBJ("../data/bunny.obj", V_bunny, F_bunny);
 
     // setup simulation variables
@@ -63,8 +61,6 @@ int main(int argc, char **argv)
     Visualize::setup(q, v);
     Visualize::viewer().callback_post_draw = &simulate;
     Visualize::add_object_to_scene(V_bunny, F_bunny, Eigen::RowVector3d(244, 165, 230) / 255.);
-    // Visualize::add_object_to_scene(V_cow, F_cow, Eigen::RowVector3d(244, 165, 230) / 255.);
-    // Visualize::add_object_to_scene(V_spring, F_spring, Eigen::RowVector3d(200, 200, 200) / 255.);
     Visualize::viewer().launch();
 
     return 0;
