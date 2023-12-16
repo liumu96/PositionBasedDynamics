@@ -1,0 +1,14 @@
+# Target labels
+ glfw-populate
+# Source files and their labels
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/CMakeFiles/glfw-populate
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/CMakeFiles/glfw-populate.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/CMakeFiles/glfw-populate-complete.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-build.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-configure.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-download.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-install.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-mkdir.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-patch.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-test.rule
+/Users/liuxing/Documents/GithubCodeSpace/PositionBasedDynamics/build/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-update.rule
