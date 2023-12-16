@@ -1,4 +1,6 @@
 build
 bin
-.viscode
+.vscode
 # extern
+data
+.DS_Store

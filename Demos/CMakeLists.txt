@@ -1,9 +1,9 @@
-# include(Visualization/CMakeLists.txt)
+include(Visualization/CMakeLists.txt)
 
 # search all demos
 set(PBD_DEMOS 
 	# BarDemo
-	# ClothDemo
+	ClothDemo
 	# CosseratRodsDemo
 	# CouplingDemos
 	# DistanceFieldDemos
