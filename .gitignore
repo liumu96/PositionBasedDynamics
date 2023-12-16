@@ -2,5 +2,5 @@ build
 bin
 .vscode
 # extern
-data
+# data
 .DS_Store
