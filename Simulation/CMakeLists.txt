@@ -1,43 +1,43 @@
 add_library(Simulation
-		# AABB.h
-		# CollisionDetection.cpp
-		# CollisionDetection.h
-		# Constraints.cpp
-		# Constraints.h
-		# CubicSDFCollisionDetection.cpp
-		# CubicSDFCollisionDetection.h
-		# DistanceFieldCollisionDetection.cpp
-		# DistanceFieldCollisionDetection.h
-		# IDFactory.cpp
-		# IDFactory.h
-		# LineModel.cpp
-		# LineModel.h
-		# NeighborhoodSearchSpatialHashing.cpp
-		# NeighborhoodSearchSpatialHashing.h
-		# ParticleData.h
-		# RigidBody.h
-		# RigidBodyGeometry.cpp
-		# RigidBodyGeometry.h
-		# Simulation.cpp
-		# Simulation.h
-		# SimulationModel.cpp
-		# SimulationModel.h
-		# TetModel.cpp
-		# TetModel.h
-		# TimeManager.cpp
-		# TimeManager.h
-		# TimeStep.cpp
-		# TimeStep.h
-		# TimeStepController.cpp
-		# TimeStepController.h
-		# TriangleModel.cpp
-		# TriangleModel.h
+		AABB.h
+		CollisionDetection.cpp
+		CollisionDetection.h
+		Constraints.cpp
+		Constraints.h
+		CubicSDFCollisionDetection.cpp
+		CubicSDFCollisionDetection.h
+		DistanceFieldCollisionDetection.cpp
+		DistanceFieldCollisionDetection.h
+		IDFactory.cpp
+		IDFactory.h
+		LineModel.cpp
+		LineModel.h
+		NeighborhoodSearchSpatialHashing.cpp
+		NeighborhoodSearchSpatialHashing.h
+		ParticleData.h
+		RigidBody.h
+		RigidBodyGeometry.cpp
+		RigidBodyGeometry.h
+		Simulation.cpp
+		Simulation.h
+		SimulationModel.cpp
+		SimulationModel.h
+		TetModel.cpp
+		TetModel.h
+		TimeManager.cpp
+		TimeManager.h
+		TimeStep.cpp
+		TimeStep.h
+		TimeStepController.cpp
+		TimeStepController.h
+		TriangleModel.cpp
+		TriangleModel.h
 		
-		# BoundingSphere.h
-		# BoundingSphereHierarchy.cpp
-		# BoundingSphereHierarchy.h
-		# kdTree.h
-		# kdTree.inl
+		BoundingSphere.h
+		BoundingSphereHierarchy.cpp
+		BoundingSphereHierarchy.h
+		kdTree.h
+		kdTree.inl
 
 		CMakeLists.txt
 )

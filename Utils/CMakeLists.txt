@@ -10,25 +10,25 @@ file (STRINGS "../version.txt" PBD_VERSION)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/Version.h @ONLY)
 
 add_library(Utils
-		# FileSystem.h
-		# Hashmap.h
-		# IndexedFaceMesh.cpp
-		# IndexedFaceMesh.h
-		# IndexedTetMesh.cpp
-		# IndexedTetMesh.h
-		# Logger.h
-		# OBJLoader.h
-		# PLYLoader.h
-		# SceneLoader.cpp
-		# SceneLoader.h
-		# StringTools.h
-		# SystemInfo.h
-		# TetGenLoader.cpp
-		# TetGenLoader.h
-		# Timing.h
+		FileSystem.h
+		Hashmap.h
+		IndexedFaceMesh.cpp
+		IndexedFaceMesh.h
+		IndexedTetMesh.cpp
+		IndexedTetMesh.h
+		Logger.h
+		OBJLoader.h
+		PLYLoader.h
+		SceneLoader.cpp
+		SceneLoader.h
+		StringTools.h
+		SystemInfo.h
+		TetGenLoader.cpp
+		TetGenLoader.h
+		Timing.h
 		Version.h
-		# VolumeIntegration.cpp
-		# VolumeIntegration.h
+		VolumeIntegration.cpp
+		VolumeIntegration.h
 
 		CMakeLists.txt
 )

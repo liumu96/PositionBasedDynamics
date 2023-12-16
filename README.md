@@ -33,7 +33,7 @@ As a newcomer to Computer Graphics and C++ programming, I found this process inc
 ## Records
 
 - Configured CMakeLists.txt ✅
-- Constructed the file structure
+- Constructed the file structure ✅
 - Started with the ClothDemo
 
 ## Bug fix
