@@ -32,7 +32,7 @@ As a newcomer to Computer Graphics and C++ programming, I found this process inc
 
 ## Records
 
-- Configured CMakeLists.txt
+- Configured CMakeLists.txt ✅
 - Constructed the file structure
 - Started with the ClothDemo
 
