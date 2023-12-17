@@ -1,4 +1,5 @@
 #include "Common/Common.h"
+#include "Demos/Visualization/MiniGL.h"
 
 #include "Simulation/TimeManager.h"
 
@@ -16,8 +17,11 @@
 
 using namespace PBD;
 
+void timeStep();
 void buildModel();
 void createMesh();
+void render();
+void reset();
 
 const int nRows = 50;
 const int nCols = 50;
@@ -40,7 +44,30 @@ int main(int argc, char **argv)
 
     buildModel();
 
-    std::cout << "Cloth Demo" << std::endl;
+    // OpenGL
+    MiniGL::setClientIdleFunc(timeStep);
+    MiniGL::addKeyFunc('r', reset);
+    MiniGL::setClientSceneFunc(render);
+    MiniGL::setViewport(40.0f, 0.1f, 500.0f, Vector3r(5.0, 10.0, 30.0), Vector3r(5.0, 0.0, 0.0));
+
+    MiniGL::mainLoop();
+
+    std::cout << "Cloth Demo3" << std::endl;
+}
+
+void reset()
+{
+    // todo
+}
+
+void timeStep()
+{
+    // todo
+}
+
+void render()
+{
+    // todo
 }
 
 void buildModel()
