@@ -3,6 +3,7 @@
 #include "Simulation/SimulationModel.h"
 
 #include "Demos/Common/DemoBase.h"
+#include "Simulation/Simulation.h"
 
 #include <iostream>
 
@@ -29,6 +30,8 @@ int main(int argc, char **argv)
 
     SimulationModel *model = new SimulationModel();
     model->init();
+
+    Simulation::getCurrent()->setModel(model);
 
     std::cout << "Cloth Demo" << std::endl;
 }
