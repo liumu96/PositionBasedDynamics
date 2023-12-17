@@ -1,5 +1,7 @@
 #include "Common/Common.h"
 
+#include "Simulation/SimulationModel.h"
+
 #include "Demos/Common/DemoBase.h"
 
 #include <iostream>
@@ -24,6 +26,9 @@ int main(int argc, char **argv)
 
     base = new DemoBase();
     base->init(argc, argv, "Cloth demo");
+
+    SimulationModel *model = new SimulationModel();
+    model->init();
 
     std::cout << "Cloth Demo" << std::endl;
 }
