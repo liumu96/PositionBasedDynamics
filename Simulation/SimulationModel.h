@@ -2,6 +2,9 @@
 
 #include "Common/Common.h"
 
+#include "Simulation/ParticleData.h"
+#include "TriangleModel.h"
+
 #include "ParameterObject.h"
 
 namespace PBD
@@ -27,7 +30,12 @@ namespace PBD
         typedef std::vector<ParticleRigidBodyContactConstraint> ParticleRigidBodyContactConstraintVector;
         typedef std::vector<ParticleTetContactConstraint> ParticleSolidContactConstraintVector;
 
+        typedef std::vector<TriangleModel *> TriangleModelVector;
+
     protected:
+        TriangleModelVector m_triangleModels;
+        ParticleData m_particles;
+
         RigidBodyContactConstraintVector m_rigidBodyContactConstraints;
         ParticleRigidBodyContactConstraintVector m_particleRigidBodyContactConstraints;
         ParticleSolidContactConstraintVector m_particleSolidContactConstraints;
@@ -67,6 +75,21 @@ namespace PBD
     public:
         virtual void cleanup();
 
+        ParticleData &getParticles();
+
         bool m_groupsInitialized;
+
+        void addTriangleModel(
+            const unsigned int nPoints,
+            const unsigned int nFaces,
+            Vector3r *points,
+            unsigned int *indices,
+            const TriangleModel::ParticleMesh::UVIndices &uvIndices,
+            const TriangleModel::ParticleMesh::UVs &uvs);
+
+        void addRegularTriangleModel(const int width, const int height,
+                                     const Vector3r &translation = Vector3r::Zero(),
+                                     const Matrix3r &rotation = Matrix3r::Identity(),
+                                     const Vector2r &scale = Vector2r::Ones());
     };
 }

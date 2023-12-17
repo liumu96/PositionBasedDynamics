@@ -32,6 +32,7 @@ namespace PBD
 
         void init();
 
+        SimulationModel *getModel() { return m_model; }
         void setModel(SimulationModel *model) { m_model = model; }
     };
 }

@@ -82,5 +82,12 @@ void buildModel()
  */
 void createMesh()
 {
-    // todo
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    model->addRegularTriangleModel(nCols, nRows,
+                                   Vector3r(0, 1, 0), AngleAxisr(M_PI * 0.5, Vector3r(1, 0, 0)).matrix(), Vector2r(width, height));
+
+    // Set mass of points to zero => make it static
+    ParticleData &pd = model->getParticles();
+    pd.setMass(0, 0.0);
+    pd.setMass(nRows - 1, 0.0);
 }

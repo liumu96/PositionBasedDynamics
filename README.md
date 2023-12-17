@@ -38,7 +38,7 @@ As a newcomer to Computer Graphics and C++ programming, I found this process inc
 
 ## Bug fix
 
-- **#Bug1**:
+- **#Bug1**: ✅
   After cloning the repository, I ran the following commands:
 
 ```bash
@@ -82,7 +82,7 @@ set(OpenMP_CXX_LIB_NAMES "libomp")
 set(OpenMP_libomp_LIBRARY "/opt/homebrew/Cellar/libomp/17.0.6/lib/libomp.dylib")
 ```
 
-- **Bug2**: It occures when run
+- **Bug2**: It occures when run ✅
 
 ```bash
 make
@@ -113,3 +113,20 @@ set(OpenMP_CXX_LIB_NAMES "libomp")
 set(OpenMP_libomp_LIBRARY "/opt/homebrew/Cellar/libomp/17.0.6/lib/libomp.dylib")
 find_package(OpenMP REQUIRED)
 ```
+
+- **Bug3**: The initialization of the GLFW libraty on macOS. ❌
+  The error message is:
+
+  ```c++
+  if (!glfwInit()) {
+    // Initialization failed
+    exit(EXIT_FAILURE);
+  }
+  ```
+
+  ```bash
+  Error: Cocoa: Failed to find service port for display
+  Error: Cocoa: Failed to find service port for display
+  ```
+
+  - Check for GLFW Version Compatibility
