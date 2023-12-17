@@ -1,5 +1,7 @@
 #include "Common/Common.h"
 
+#include "Simulation/TimeManager.h"
+
 #include "Simulation/SimulationModel.h"
 
 #include "Demos/Common/DemoBase.h"
@@ -13,6 +15,9 @@
 #endif
 
 using namespace PBD;
+
+void buildModel();
+void createMesh();
 
 const int nRows = 50;
 const int nCols = 50;
@@ -33,5 +38,22 @@ int main(int argc, char **argv)
 
     Simulation::getCurrent()->setModel(model);
 
+    buildModel();
+
     std::cout << "Cloth Demo" << std::endl;
+}
+
+void buildModel()
+{
+    TimeManager::getCurrent()->setTimeStepSize(static_cast<Real>(0.005));
+
+    createMesh();
+}
+
+/**
+ * Create a particle model mesh
+ */
+void createMesh()
+{
+    // todo
 }
