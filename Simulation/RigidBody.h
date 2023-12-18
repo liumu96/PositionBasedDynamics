@@ -12,11 +12,22 @@ namespace PBD
     private:
         /** mass */
         Real m_mass;
+        /** inverse mass */
+        Real m_invMass;
         /** center of mass */
         Vector3r m_x;
 
+        /** center of mass velocity */
+        Vector3r m_v;
+
+        /** 3x3 matrix, inverse of the inertia tensor in world space */
+        Matrix3r m_inertiaTensorInverseW;
+
         /** Quaternion that describes the rotation of the body in world space */
         Quaternionr m_q;
+
+        /** Angular velocity, defines rotation axis and velocity (magnitude of the vector) */
+        Vector3r m_omega;
 
         RigidBodyGeometry m_geometry;
 
@@ -40,6 +51,11 @@ namespace PBD
             return m_mass;
         }
 
+        FORCE_INLINE const Real &getInvMass() const
+        {
+            return m_invMass;
+        }
+
         FORCE_INLINE Vector3r &getPosition()
         {
             return m_x;
@@ -48,6 +64,36 @@ namespace PBD
         FORCE_INLINE const Vector3r &getPosition() const
         {
             return m_x;
+        }
+
+        FORCE_INLINE Vector3r &getVelocity()
+        {
+            return m_v;
+        }
+
+        FORCE_INLINE const Vector3r &getVelocity() const
+        {
+            return m_v;
+        }
+
+        FORCE_INLINE Matrix3r &getInertiaTensorInverseW()
+        {
+            return m_inertiaTensorInverseW;
+        }
+
+        FORCE_INLINE const Matrix3r &getInertiaTensorInverseW() const
+        {
+            return m_inertiaTensorInverseW;
+        }
+
+        FORCE_INLINE Vector3r &getAngularVelocity()
+        {
+            return m_omega;
+        }
+
+        FORCE_INLINE const Vector3r &getAngularVelocity() const
+        {
+            return m_omega;
         }
 
         FORCE_INLINE Quaternionr &getRotation()

@@ -75,6 +75,16 @@ namespace PBD
             return m_x[i];
         }
 
+        FORCE_INLINE Vector3r &getVelocity(const unsigned int i)
+        {
+            return m_v[i];
+        }
+
+        FORCE_INLINE const Vector3r &getVelocity(const unsigned int i) const
+        {
+            return m_v[i];
+        }
+
         FORCE_INLINE void setMass(const unsigned int i, const Real mass)
         {
             m_masses[i] = mass;
@@ -82,6 +92,11 @@ namespace PBD
                 m_invMasses[i] = static_cast<Real>(1.0) / mass;
             else
                 m_invMasses[i] = 0.0;
+        }
+
+        FORCE_INLINE const Real getInvMass(const unsigned int i) const
+        {
+            return m_invMasses[i];
         }
 
         /**

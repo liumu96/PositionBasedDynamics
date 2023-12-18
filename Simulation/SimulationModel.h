@@ -107,5 +107,20 @@ namespace PBD
                                      const Vector3r &translation = Vector3r::Zero(),
                                      const Matrix3r &rotation = Matrix3r::Identity(),
                                      const Vector2r &scale = Vector2r::Ones());
+
+        bool addRigidBodyContactConstraint(const unsigned int rbIndex1, const unsigned int rbIndex2,
+                                           const Vector3r &cp1, const Vector3r &cp2,
+                                           const Vector3r &normal, const Real dist,
+                                           const Real restitutionCoeff, const Real frictionCoeff);
+        bool addParticleRigidBodyContactConstraint(const unsigned int particleIndex, const unsigned int rbIndex,
+                                                   const Vector3r &cp1, const Vector3r &cp2,
+                                                   const Vector3r &normal, const Real dist,
+                                                   const Real restitutionCoeff, const Real frictionCoeff);
+
+        bool addParticleSolidContactConstraint(const unsigned int particleIndex, const unsigned int solidIndex,
+                                               const unsigned int tetIndex, const Vector3r &bary,
+                                               const Vector3r &cp1, const Vector3r &cp2,
+                                               const Vector3r &normal, const Real dist,
+                                               const Real restitutionCoeff, const Real frictionCoeff);
     };
 }

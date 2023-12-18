@@ -11,6 +11,7 @@
 #include "Utils/SystemInfo.h"
 
 #include "../Visualization/Visualization.h"
+#include "Simulation/DistanceFieldCollisionDetection.h"
 
 INIT_LOGGING
 
@@ -429,69 +430,69 @@ void DemoBase::render()
 
     // DistanceFieldCollisionDetection *cd = (DistanceFieldCollisionDetection *)Simulation::getCurrent()->getTimeStep()->getCollisionDetection();
     // if (cd && (m_renderSDF || m_renderAABB || (m_renderBVHDepth >= 0) || (m_renderBVHDepthTets >= 0)))
-    // {
-    // std::vector<CollisionDetection::CollisionObject *> &collisionObjects = cd->getCollisionObjects();
-    // for (unsigned int k = 0; k < collisionObjects.size(); k++)
-    // {
-    //     if (m_renderAABB)
-    //         renderAABB(collisionObjects[k]->m_aabb);
+    {
+        // std::vector<CollisionDetection::CollisionObject *> &collisionObjects = cd->getCollisionObjects();
+        // for (unsigned int k = 0; k < collisionObjects.size(); k++)
+        // {
+        //     if (m_renderAABB)
+        //         renderAABB(collisionObjects[k]->m_aabb);
 
-    //     if (m_renderSDF)
-    //         renderSDF(collisionObjects[k]);
+        //     if (m_renderSDF)
+        //         renderSDF(collisionObjects[k]);
 
-    //     if (m_renderBVHDepth >= 0)
-    //     {
-    //         if (cd->isDistanceFieldCollisionObject(collisionObjects[k]))
-    //         {
-    //             const PointCloudBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvh;
+        //     if (m_renderBVHDepth >= 0)
+        //     {
+        //         if (cd->isDistanceFieldCollisionObject(collisionObjects[k]))
+        //         {
+        //             const PointCloudBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvh;
 
-    //             std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
-    //             { return (int)depth <= m_renderBVHDepth; };
-    //             std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
-    //             {
-    //                 if (depth == m_renderBVHDepth)
-    //                 {
-    //                     const BoundingSphere &bs = bvh.hull(node_index);
-    //                     if (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::RigidBodyCollisionObjectType)
-    //                     {
-    //                         RigidBody *body = rb[collisionObjects[k]->m_bodyIndex];
-    //                         const Vector3r &sphere_x = bs.x();
-    //                         const Vector3r sphere_x_w = body->getRotation() * sphere_x + body->getPosition();
-    //                         MiniGL::drawSphere(sphere_x_w, std::max((float)bs.r(), 0.05f), staticColor);
-    //                     }
-    //                     else
-    //                         MiniGL::drawSphere(bs.x(), std::max((float)bs.r(), 0.05f), staticColor);
-    //                 }
-    //             };
+        //             std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
+        //             { return (int)depth <= m_renderBVHDepth; };
+        //             std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
+        //             {
+        //                 if (depth == m_renderBVHDepth)
+        //                 {
+        //                     const BoundingSphere &bs = bvh.hull(node_index);
+        //                     if (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::RigidBodyCollisionObjectType)
+        //                     {
+        //                         RigidBody *body = rb[collisionObjects[k]->m_bodyIndex];
+        //                         const Vector3r &sphere_x = bs.x();
+        //                         const Vector3r sphere_x_w = body->getRotation() * sphere_x + body->getPosition();
+        //                         MiniGL::drawSphere(sphere_x_w, std::max((float)bs.r(), 0.05f), staticColor);
+        //                     }
+        //                     else
+        //                         MiniGL::drawSphere(bs.x(), std::max((float)bs.r(), 0.05f), staticColor);
+        //                 }
+        //             };
 
-    //             bvh.traverse_depth_first(predicate, cb);
-    //         }
-    //     }
+        //             bvh.traverse_depth_first(predicate, cb);
+        //         }
+        //     }
 
-    // if (m_renderBVHDepthTets >= 0)
-    // {
-    //     if (cd->isDistanceFieldCollisionObject(collisionObjects[k]) && (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::TetModelCollisionObjectType))
-    //     {
+        //     if (m_renderBVHDepthTets >= 0)
+        //     {
+        //         if (cd->isDistanceFieldCollisionObject(collisionObjects[k]) && (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::TetModelCollisionObjectType))
+        //         {
 
-    //         TetMeshBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvhTets;
+        //             TetMeshBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvhTets;
 
-    //         std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
-    //         { return (int)depth <= m_renderBVHDepthTets; };
-    //         std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
-    //         {
-    //             if (depth == m_renderBVHDepthTets)
-    //             {
-    //                 const BoundingSphere &bs = bvh.hull(node_index);
-    //                 const Vector3r &sphere_x = bs.x();
-    //                 MiniGL::drawSphere(sphere_x, std::max((float)bs.r(), 0.05f), staticColor);
-    //             }
-    //         };
+        //             std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
+        //             { return (int)depth <= m_renderBVHDepthTets; };
+        //             std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
+        //             {
+        //                 if (depth == m_renderBVHDepthTets)
+        //                 {
+        //                     const BoundingSphere &bs = bvh.hull(node_index);
+        //                     const Vector3r &sphere_x = bs.x();
+        //                     MiniGL::drawSphere(sphere_x, std::max((float)bs.r(), 0.05f), staticColor);
+        //                 }
+        //             };
 
-    //         bvh.traverse_depth_first(predicate, cb);
-    //     }
-    // }
-    //     }
-    // }
+        //             bvh.traverse_depth_first(predicate, cb);
+        //         }
+        //     }
+        // }
+    }
 
     // const Vector3r refOffset(0, 0, 0);
     // const ParticleData &pd = model->getParticles();

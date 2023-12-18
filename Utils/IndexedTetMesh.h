@@ -55,6 +55,9 @@ namespace Utilities
 
         void release();
 
+        const Tets &getTets() const { return m_tetIndices; }
+        Tets &getTets() { return m_tetIndices; }
+
         unsigned int numVertices() const { return m_numPoints; }
     };
 }

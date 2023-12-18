@@ -197,3 +197,43 @@ void SimulationModel::addRegularTriangleModel(const int width, const int height,
     for (unsigned int i = offset; i < offset + m_triangleModels[modelIndex]->getParticleMesh().numVertices(); i++)
         pd.setMass(i, 1.0);
 }
+
+bool SimulationModel::addRigidBodyContactConstraint(const unsigned int rbIndex1, const unsigned int rbIndex2,
+                                                    const Vector3r &cp1, const Vector3r &cp2,
+                                                    const Vector3r &normal, const Real dist,
+                                                    const Real restitutionCoeff, const Real frictionCoeff)
+{
+    m_rigidBodyContactConstraints.emplace_back(RigidBodyContactConstraint());
+    RigidBodyContactConstraint &cc = m_rigidBodyContactConstraints.back();
+    const bool res = cc.initConstraint(*this, rbIndex1, rbIndex2, cp1, cp2, normal, dist, restitutionCoeff, m_contactStiffnessRigidBody, frictionCoeff);
+    if (!res)
+        m_rigidBodyContactConstraints.pop_back();
+    return res;
+}
+
+bool SimulationModel::addParticleRigidBodyContactConstraint(const unsigned int particleIndex, const unsigned int rbIndex,
+                                                            const Vector3r &cp1, const Vector3r &cp2,
+                                                            const Vector3r &normal, const Real dist,
+                                                            const Real restitutionCoeff, const Real frictionCoeff)
+{
+    m_particleRigidBodyContactConstraints.emplace_back(ParticleRigidBodyContactConstraint());
+    ParticleRigidBodyContactConstraint &cc = m_particleRigidBodyContactConstraints.back();
+    const bool res = cc.initConstraint(*this, particleIndex, rbIndex, cp1, cp2, normal, dist, restitutionCoeff, m_contactStiffnessParticleRigidBody, frictionCoeff);
+    if (!res)
+        m_particleRigidBodyContactConstraints.pop_back();
+    return res;
+}
+
+bool SimulationModel::addParticleSolidContactConstraint(const unsigned int particleIndex, const unsigned int solidIndex,
+                                                        const unsigned int tetIndex, const Vector3r &bary,
+                                                        const Vector3r &cp1, const Vector3r &cp2,
+                                                        const Vector3r &normal, const Real dist,
+                                                        const Real restitutionCoeff, const Real frictionCoeff)
+{
+    m_particleSolidContactConstraints.emplace_back(ParticleTetContactConstraint());
+    ParticleTetContactConstraint &cc = m_particleSolidContactConstraints.back();
+    const bool res = cc.initConstraint(*this, particleIndex, solidIndex, tetIndex, bary, cp1, cp2, normal, dist, frictionCoeff);
+    if (!res)
+        m_particleSolidContactConstraints.pop_back();
+    return res;
+}

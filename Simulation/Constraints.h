@@ -206,8 +206,12 @@ namespace PBD
 
         RigidBodyContactConstraint() {}
         ~RigidBodyContactConstraint() {}
-
         virtual int &getTypeId() const { return TYPE_ID; }
+
+        bool initConstraint(SimulationModel &model, const unsigned int rbIndex1, const unsigned int rbIndex2,
+                            const Vector3r &cp1, const Vector3r &cp2,
+                            const Vector3r &normal, const Real dist,
+                            const Real restitutionCoeff, const Real stiffness, const Real frictionCoeff);
     };
 
     class ParticleRigidBodyContactConstraint
@@ -217,22 +221,47 @@ namespace PBD
         static int TYPE_ID;
         /** indices of the linked bodies */
         std::array<unsigned int, 2> m_bodies;
-        // todo
-
+        Real m_stiffness;
+        Real m_frictionCoeff;
+        Real m_sum_impulses;
         Eigen::Matrix<Real, 3, 5, Eigen::DontAlign> m_constraintInfo;
 
         ParticleRigidBodyContactConstraint() {}
         ~ParticleRigidBodyContactConstraint() {}
+        virtual int &getTypeId() const { return TYPE_ID; }
+
+        bool initConstraint(SimulationModel &model, const unsigned int particleIndex, const unsigned int rbIndex,
+                            const Vector3r &cp1, const Vector3r &cp2,
+                            const Vector3r &normal, const Real dist,
+                            const Real restitutionCoeff, const Real stiffness, const Real frictionCoeff);
     };
 
     class ParticleTetContactConstraint
     {
     public:
         static int TYPE_ID;
-        // todo
+        /** indices of the linked bodies */
+        std::array<unsigned int, 2> m_bodies;
+        unsigned int m_solidIndex;
+        unsigned int m_tetIndex;
+        Vector3r m_bary;
+        Real m_lambda;
+        Real m_frictionCoeff;
+        Eigen::Matrix<Real, 3, 3, Eigen::DontAlign> m_constraintInfo;
+        Real m_invMasses[4];
+        std::array<Vector3r, 4> m_x;
+        std::array<Vector3r, 4> m_v;
 
         ParticleTetContactConstraint() {}
         ~ParticleTetContactConstraint() {}
+
+        virtual int &getTypeId() const { return TYPE_ID; }
+
+        bool initConstraint(SimulationModel &model, const unsigned int particleIndex, const unsigned int solidIndex,
+                            const unsigned int tetindex, const Vector3r &bary,
+                            const Vector3r &cp1, const Vector3r &cp2,
+                            const Vector3r &normal, const Real dist,
+                            const Real frictionCoeff);
     };
 
     struct Node;

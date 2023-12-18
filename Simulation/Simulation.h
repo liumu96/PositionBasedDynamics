@@ -3,6 +3,7 @@
 #include "Common/Common.h"
 #include "SimulationModel.h"
 #include "ParameterObject.h"
+#include "TimeStep.h"
 
 namespace PBD
 {
@@ -15,7 +16,7 @@ namespace PBD
     public:
     protected:
         SimulationModel *m_model;
-
+        TimeStep *m_timeStep;
         Vector3r m_gravitation;
 
         virtual void initParameters();
@@ -34,5 +35,7 @@ namespace PBD
 
         SimulationModel *getModel() { return m_model; }
         void setModel(SimulationModel *model) { m_model = model; }
+
+        TimeStep *getTimeStep() { return m_timeStep; }
     };
 }
