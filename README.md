@@ -130,3 +130,18 @@ find_package(OpenMP REQUIRED)
   ```
 
   - Check for GLFW Version Compatibility
+
+- ** Warning 1**: The warning info is `format string is not a string literal (potentially insecure) [-Wformat-security] ImGui::SetTooltip(helpText.c_str());`. ✅
+
+```cpp
+const char* formatString = "Tooltip Text: %s";
+ImGui::SetTooltip(formatString, helpText.c_str());
+```
+
+- **Bug4**: ❌
+  `Failed to initialize OpenGL loader!`
+  ```cpp
+  ImGui_ImplGlfw_InitForOpenGL(MiniGL::getWindow(), false);
+  const char *glsl_version = "#version 330";
+  ImGui_ImplOpenGL3_Init(glsl_version);
+  ```

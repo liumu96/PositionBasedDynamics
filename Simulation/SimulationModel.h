@@ -2,17 +2,20 @@
 
 #include "Common/Common.h"
 
+#include "Simulation/RigidBody.h"
 #include "Simulation/ParticleData.h"
 #include "TriangleModel.h"
+#include "TetModel.h"
 
 #include "ParameterObject.h"
+#include "Constraints.h"
 
 namespace PBD
 {
     class Constraint;
-    class RigidBodyContactConstraint;
-    class ParticleRigidBodyContactConstraint;
-    class ParticleTetContactConstraint;
+    // class RigidBodyContactConstraint;
+    // class ParticleRigidBodyContactConstraint;
+    // class ParticleTetContactConstraint;
 
     class SimulationModel : public GenParam::ParameterObject
     {
@@ -30,12 +33,17 @@ namespace PBD
         typedef std::vector<ParticleRigidBodyContactConstraint> ParticleRigidBodyContactConstraintVector;
         typedef std::vector<ParticleTetContactConstraint> ParticleSolidContactConstraintVector;
 
+        typedef std::vector<RigidBody *> RigidBodyVector;
         typedef std::vector<TriangleModel *> TriangleModelVector;
+        typedef std::vector<TetModel *> TetModelVector;
 
     protected:
+        RigidBodyVector m_rigidBodies;
         TriangleModelVector m_triangleModels;
+        TetModelVector m_tetModels;
         ParticleData m_particles;
 
+        ConstraintVector m_constraints;
         RigidBodyContactConstraintVector m_rigidBodyContactConstraints;
         ParticleRigidBodyContactConstraintVector m_particleRigidBodyContactConstraints;
         ParticleSolidContactConstraintVector m_particleSolidContactConstraints;
@@ -75,7 +83,15 @@ namespace PBD
     public:
         virtual void cleanup();
 
+        RigidBodyVector &getRigidBodies();
         ParticleData &getParticles();
+
+        TriangleModelVector &getTriangleModels();
+        TetModelVector &getTetModels();
+
+        ConstraintVector &getConstraints();
+        RigidBodyContactConstraintVector &getRigidBodyContactConstraints();
+        ParticleRigidBodyContactConstraintVector &getParticleRigidBodyContactConstraints();
 
         bool m_groupsInitialized;
 

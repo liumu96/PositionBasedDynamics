@@ -39,6 +39,8 @@ Vector3r MiniGL::m_translation;
 
 std::vector<MiniGL::KeyFunction> MiniGL::keyfunc;
 int MiniGL::drawMode = GL_FILL;
+unsigned char MiniGL::texData[IMAGE_ROWS][IMAGE_COLS][3];
+unsigned int MiniGL::m_texId = 0;
 
 GLint MiniGL::m_context_major_version = 0;
 GLint MiniGL::m_context_minor_version = 0;
@@ -46,7 +48,11 @@ GLint MiniGL::m_context_profile = 0;
 
 GLUquadricObj *MiniGL::m_sphereQuadric = nullptr;
 std::vector<MiniGL::ReshapeFct> MiniGL::m_reshapeFct;
-
+std::vector<MiniGL::KeyboardFct> MiniGL::m_keyboardFct;
+std::vector<MiniGL::CharFct> MiniGL::m_charFct;
+std::vector<MiniGL::MousePressFct> MiniGL::m_mousePressFct;
+std::vector<MiniGL::MouseMoveFct> MiniGL::m_mouseMoveFct;
+std::vector<MiniGL::MouseWheelFct> MiniGL::m_mouseWheelFct;
 GLFWwindow *MiniGL::m_glfw_window = nullptr;
 std::vector<MiniGL::Triangle> MiniGL::m_drawTriangle;
 std::vector<MiniGL::Line> MiniGL::m_drawLines;
@@ -54,9 +60,58 @@ std::vector<MiniGL::Point> MiniGL::m_drawPoints;
 bool MiniGL::m_vsync = false;
 double MiniGL::m_lastTime;
 
+void MiniGL::bindTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, MiniGL::m_texId);
+}
+void MiniGL::unbindTexture()
+{
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void MiniGL::getOpenGLVersion(int &major_version, int &minor_version)
 {
     sscanf((const char *)glGetString(GL_VERSION), "%d.%d", &major_version, &minor_version);
+}
+
+void MiniGL::coordinateSystem()
+{
+    Eigen::Vector3f a(0, 0, 0);
+    Eigen::Vector3f b(2, 0, 0);
+    Eigen::Vector3f c(0, 2, 0);
+    Eigen::Vector3f d(0, 0, 2);
+
+    float diffcolor[4] = {1, 0, 0, 1};
+    float speccolor[4] = {1, 1, 1, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, diffcolor);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffcolor);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, speccolor);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100.0);
+    glLineWidth(2);
+
+    glBegin(GL_LINES);
+    glVertex3fv(&a[0]);
+    glVertex3fv(&b[0]);
+    glEnd();
+
+    float diffcolor2[4] = {0, 1, 0, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, diffcolor2);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffcolor2);
+
+    glBegin(GL_LINES);
+    glVertex3fv(&a[0]);
+    glVertex3fv(&c[0]);
+    glEnd();
+
+    float diffcolor3[4] = {0, 0, 1, 1};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, diffcolor3);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffcolor3);
+
+    glBegin(GL_LINES);
+    glVertex3fv(&a[0]);
+    glVertex3fv(&d[0]);
+    glEnd();
+    glLineWidth(1);
 }
 
 void MiniGL::drawVector(const Vector3r &a, const Vector3r &b, const float w, float *color)
@@ -76,6 +131,48 @@ void MiniGL::drawVector(const Vector3r &a, const Vector3r &b, const float w, flo
     glEnd();
 
     glLineWidth(1);
+}
+
+void MiniGL::drawCylinder(const Vector3r &a, const Vector3r &b, const float *color, const float radius, const unsigned int subdivisions)
+{
+    float speccolor[4] = {1.0, 1.0, 1.0, 1.0};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, speccolor);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100.0);
+    glColor3fv(color);
+
+    Real vx = (b.x() - a.x());
+    Real vy = (b.y() - a.y());
+    Real vz = (b.z() - a.z());
+    // handle the degenerate case with an approximation
+    if (vz == 0)
+        vz = .00000001;
+    Real v = sqrt(vx * vx + vy * vy + vz * vz);
+    Real ax = static_cast<Real>(57.2957795) * acos(vz / v);
+    if (vz < 0.0)
+        ax = -ax;
+    Real rx = -vy * vz;
+    Real ry = vx * vz;
+
+    GLUquadricObj *quadric = gluNewQuadric();
+    gluQuadricNormals(quadric, GLU_SMOOTH);
+
+    glPushMatrix();
+    glTranslatef((float)a.x(), (float)a.y(), (float)a.z());
+    glRotatef((float)ax, (float)rx, (float)ry, 0.0f);
+    // draw the cylinder
+    gluCylinder(quadric, radius, radius, v, subdivisions, 1);
+    gluQuadricOrientation(quadric, GLU_INSIDE);
+    // draw the first cap
+    gluDisk(quadric, 0.0, radius, subdivisions, 1);
+    glTranslatef(0, 0, (float)v);
+    // draw the second cap
+    gluQuadricOrientation(quadric, GLU_OUTSIDE);
+    gluDisk(quadric, 0.0, radius, subdivisions, 1);
+    glPopMatrix();
+
+    gluDeleteQuadric(quadric);
 }
 
 void MiniGL::drawSphere(const Vector3r &translation, float radius, float *color, const unsigned int subDivision)
@@ -100,6 +197,24 @@ void MiniGL::drawSphere(const Vector3r &translation, float radius, float *color,
     glPopMatrix();
 }
 
+void MiniGL::drawPoint(const Vector3r &translation, const float pointSize, const float *const color)
+{
+    float speccolor[4] = {1.0, 1.0, 1.0, 1.0};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, speccolor);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100.0);
+    glColor3fv(color);
+
+    glPointSize(pointSize);
+
+    glBegin(GL_POINTS);
+    glVertex3v(&translation[0]);
+    glEnd();
+
+    glPointSize(1);
+}
+
 void MiniGL::drawTriangle(const Vector3r &a, const Vector3r &b, const Vector3r &c, const Vector3r &norm, float *color)
 {
     float speccolor[4] = {1.0, 1.0, 1.0, 1.0};
@@ -113,6 +228,35 @@ void MiniGL::drawTriangle(const Vector3r &a, const Vector3r &b, const Vector3r &
     glVertex3v(&a[0]);
     glVertex3v(&b[0]);
     glVertex3v(&c[0]);
+    glEnd();
+}
+
+void MiniGL::drawGrid_xz(float *color)
+{
+    float speccolor[4] = {1.0, 1.0, 1.0, 1.0};
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, color);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, speccolor);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 100.0);
+
+    const int size = 5;
+
+    glBegin(GL_LINES);
+    for (int i = -size; i <= size; i++)
+    {
+        glVertex3f((float)i, 0.0f, (float)-size);
+        glVertex3f((float)i, 0.0f, (float)size);
+        glVertex3f((float)-size, 0.0f, (float)i);
+        glVertex3f((float)size, 0.0f, (float)i);
+    }
+    glEnd();
+
+    glLineWidth(3.0f);
+    glBegin(GL_LINES);
+    glVertex3f((float)-size, 0.0f, 0.0f);
+    glVertex3f((float)size, 0.0f, 0.0f);
+    glVertex3f(0.0f, 0.0f, (float)-size);
+    glVertex3f(0.0f, 0.0f, (float)size);
     glEnd();
 }
 
@@ -235,6 +379,42 @@ void MiniGL::init(int argc, char **argv, const int width, const int height, cons
     m_lastTime = glfwGetTime();
 }
 
+void MiniGL::initTexture()
+{
+    int value;
+    for (int row = 0; row < IMAGE_ROWS; row++)
+    {
+        for (int col = 0; col < IMAGE_COLS; col++)
+        {
+            if (((row & 0x8) == 0) ^ ((col & 0x8) == 0))
+                value = 192;
+            else
+                value = 128;
+            // 			// Each cell is 8x8, value is 0 or 255 (black or white)
+            // 			value = (((row & 0x8) == 0) ^ ((col & 0x8) == 0)) * 255;
+            texData[row][col][0] = (GLubyte)value;
+            texData[row][col][1] = (GLubyte)value;
+            texData[row][col][2] = (GLubyte)value;
+        }
+    }
+
+    glGenTextures(1, &m_texId);
+    glBindTexture(GL_TEXTURE_2D, m_texId);
+    glTexImage2D(GL_TEXTURE_2D, 0, 3, IMAGE_COLS, IMAGE_ROWS, 0, GL_RGB,
+                 GL_UNSIGNED_BYTE, texData); // Create texture from image data
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+
+    glEnable(GL_TEXTURE_2D); // Enable 2D texture
+
+    // Correct texture distortion in perpective projection
+    glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+}
+
 void MiniGL::destroy()
 {
     gluDeleteQuadric(m_sphereQuadric);
@@ -256,6 +436,11 @@ void MiniGL::reshape(GLFWwindow *glfw_window, int w, int h)
 void MiniGL::setClientIdleFunc(IdleFct func)
 {
     idlefunc = func;
+}
+
+void MiniGL::setClientDestroyFunc(DestroyFct func)
+{
+    destroyfunc = func;
 }
 
 void MiniGL::addKeyFunc(unsigned char k, std::function<void()> const &func)
@@ -297,6 +482,53 @@ void MiniGL::viewport()
     transform(2, 2) *= scale[2];
     Real *transformMatrix = transform.data();
     glLoadMatrix(&transformMatrix[0]);
+}
+
+void MiniGL::initLights()
+{
+    float t = 0.9f;
+    float a = 0.2f;
+    float amb0[4] = {a, a, a, 1};
+    float diff0[4] = {t, 0, 0, 1};
+    float spec0[4] = {1, 1, 1, 1};
+    float pos0[4] = {-10, 10, 10, 1};
+    glLightfv(GL_LIGHT0, GL_AMBIENT, amb0);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diff0);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, spec0);
+    glLightfv(GL_LIGHT0, GL_POSITION, pos0);
+    glEnable(GL_LIGHT0);
+
+    float amb1[4] = {a, a, a, 1};
+    float diff1[4] = {0, 0, t, 1};
+    float spec1[4] = {1, 1, 1, 1};
+    float pos1[4] = {10, 10, 10, 1};
+    glLightfv(GL_LIGHT1, GL_AMBIENT, amb1);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, diff1);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, spec1);
+    glLightfv(GL_LIGHT1, GL_POSITION, pos1);
+    glEnable(GL_LIGHT1);
+
+    float amb2[4] = {a, a, a, 1};
+    float diff2[4] = {0, t, 0, 1};
+    float spec2[4] = {1, 1, 1, 1};
+    float pos2[4] = {0, 10, 10, 1};
+    glLightfv(GL_LIGHT2, GL_AMBIENT, amb2);
+    glLightfv(GL_LIGHT2, GL_DIFFUSE, diff2);
+    glLightfv(GL_LIGHT2, GL_SPECULAR, spec2);
+    glLightfv(GL_LIGHT2, GL_POSITION, pos2);
+    glEnable(GL_LIGHT2);
+
+    glEnable(GL_LIGHTING);
+    glLightModelf(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_TRUE);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
+}
+
+bool MiniGL::checkOpenGLVersion(const int major_version, const int minor_version)
+{
+    if ((m_context_major_version > major_version) ||
+        ((m_context_major_version == major_version) && (m_context_minor_version >= minor_version)))
+        return true;
+    return false;
 }
 
 void MiniGL::drawElements()
@@ -354,7 +586,9 @@ void MiniGL::mainLoop()
     }
 
     if (destroyfunc != nullptr)
+    {
         destroyfunc();
+    }
 
     glfwDestroyWindow(m_glfw_window);
 
@@ -371,6 +605,15 @@ void MiniGL::getWindowPos(int &x, int &y)
 void MiniGL::getWindowSize(int &w, int &h)
 {
     glfwGetWindowSize(m_glfw_window, &w, &h);
+}
+void MiniGL::setWindowPos(int x, int y)
+{
+    glfwSetWindowPos(m_glfw_window, x, y);
+}
+
+void MiniGL::setWindowSize(int w, int h)
+{
+    glfwSetWindowSize(m_glfw_window, w, h);
 }
 
 bool MiniGL::getWindowMaximized()

@@ -68,6 +68,7 @@ void timeStep()
 void render()
 {
     // todo
+    base->render();
 }
 
 void buildModel()
@@ -90,4 +91,6 @@ void createMesh()
     ParticleData &pd = model->getParticles();
     pd.setMass(0, 0.0);
     pd.setMass(nRows - 1, 0.0);
+
+    // todo init constraints
 }

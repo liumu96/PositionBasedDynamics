@@ -37,13 +37,24 @@ namespace Utilities
         const unsigned int m_verticesPerFace = 3u;
         FaceNormals m_normals;
         VertexNormals m_vertexNormals;
+        bool m_flatShading;
 
     public:
         void release();
 
+        bool getFlatShading() const { return m_flatShading; }
+
         void initMesh(const unsigned int nPoints, const unsigned int nEdges, const unsigned int nFaces);
         void addFace(const unsigned int *const indices);
         void addFace(const int *const indices);
+
+        const Faces &getFaces() const { return m_indices; }
+        Faces &getFaces() { return m_indices; }
+
+        const VertexNormals &getVertexNormals() const { return m_vertexNormals; }
+        VertexNormals &getVertexNormals() { return m_vertexNormals; }
+
+        const UVs &getUVs() const { return m_uvs; }
 
         unsigned int numVertices() const { return m_numPoints; }
         unsigned int numFaces() const { return (unsigned int)m_indices.size() / m_verticesPerFace; }

@@ -3,18 +3,20 @@
 #include "Utils/SceneLoader.h"
 #include "Utils/FileSystem.h"
 
+#include "Simulation/Simulation.h"
 #include "NumericParameter.h"
 #include "Utils/Logger.h"
 
 #include "Utils/Version.h"
 #include "Utils/SystemInfo.h"
 
+#include "../Visualization/Visualization.h"
+
 INIT_LOGGING
 
 using namespace PBD;
 using namespace std;
 using namespace GenParam;
-
 using namespace Utilities;
 
 int DemoBase::PAUSE = -1;
@@ -177,14 +179,577 @@ void DemoBase::init(int argc, char **argv, const char *demoName)
 
     // OpenGL
     MiniGL::init(argc, argv, 1280, 1024, demoName, m_gui->getVSync(), m_gui->getMaximized());
-    // MiniGL::initLights();
-    // MiniGL::initTexture();
-    // MiniGL::getOpenGLVersion(m_context_major_version, m_context_minor_version);
-    // MiniGL::setViewport(40.0, 0.1f, 500.0, Vector3r(0.0, 3.0, 8.0), Vector3r(0.0, 0.0, 0.0));
+    MiniGL::initLights();
+    MiniGL::initTexture();
+    MiniGL::getOpenGLVersion(m_context_major_version, m_context_minor_version);
+    MiniGL::setViewport(40.0, 0.1f, 500.0, Vector3r(0.0, 3.0, 8.0), Vector3r(0.0, 0.0, 0.0));
     // MiniGL::setSelectionFunc(selection, this);
 
-    // if (MiniGL::checkOpenGLVersion(3, 3))
-    //     initShaders();
+    if (MiniGL::checkOpenGLVersion(3, 3))
+        initShaders();
 
-    // m_gui->initImgui();
+    m_gui->initImgui();
+}
+
+void DemoBase::initShaders()
+{
+    std::string vertFile = m_exePath + "/resources/shaders/vs_smooth.glsl";
+    std::string fragFile = m_exePath + "/resources/shaders/fs_smooth.glsl";
+    m_shader.compileShaderFile(GL_VERTEX_SHADER, vertFile);
+    m_shader.compileShaderFile(GL_FRAGMENT_SHADER, fragFile);
+    m_shader.createAndLinkProgram();
+    m_shader.begin();
+    m_shader.addUniform("modelview_matrix");
+    m_shader.addUniform("projection_matrix");
+    m_shader.addUniform("surface_color");
+    m_shader.addUniform("shininess");
+    m_shader.addUniform("specular_factor");
+    m_shader.end();
+
+    vertFile = m_exePath + "/resources/shaders/vs_smoothTex.glsl";
+    fragFile = m_exePath + "/resources/shaders/fs_smoothTex.glsl";
+    m_shaderTex.compileShaderFile(GL_VERTEX_SHADER, vertFile);
+    m_shaderTex.compileShaderFile(GL_FRAGMENT_SHADER, fragFile);
+    m_shaderTex.createAndLinkProgram();
+    m_shaderTex.begin();
+    m_shaderTex.addUniform("modelview_matrix");
+    m_shaderTex.addUniform("projection_matrix");
+    m_shaderTex.addUniform("surface_color");
+    m_shaderTex.addUniform("shininess");
+    m_shaderTex.addUniform("specular_factor");
+    m_shaderTex.end();
+
+    vertFile = m_exePath + "/resources/shaders/vs_flat.glsl";
+    std::string geomFile = m_exePath + "/resources/shaders/gs_flat.glsl";
+    fragFile = m_exePath + "/resources/shaders/fs_flat.glsl";
+    m_shaderFlat.compileShaderFile(GL_VERTEX_SHADER, vertFile);
+    m_shaderFlat.compileShaderFile(GL_GEOMETRY_SHADER, geomFile);
+    m_shaderFlat.compileShaderFile(GL_FRAGMENT_SHADER, fragFile);
+    m_shaderFlat.createAndLinkProgram();
+    m_shaderFlat.begin();
+    m_shaderFlat.addUniform("modelview_matrix");
+    m_shaderFlat.addUniform("projection_matrix");
+    m_shaderFlat.addUniform("surface_color");
+    m_shaderFlat.addUniform("shininess");
+    m_shaderFlat.addUniform("specular_factor");
+    m_shaderFlat.end();
+}
+
+void DemoBase::shaderTexBegin(const float *col)
+{
+    m_shaderTex.begin();
+    glUniform1f(m_shaderTex.getUniform("shininess"), 5.0f);
+    glUniform1f(m_shaderTex.getUniform("specular_factor"), 0.2f);
+
+    GLfloat matrix[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+    glUniformMatrix4fv(m_shaderTex.getUniform("modelview_matrix"), 1, GL_FALSE, matrix);
+    GLfloat pmatrix[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, pmatrix);
+    glUniformMatrix4fv(m_shaderTex.getUniform("projection_matrix"), 1, GL_FALSE, pmatrix);
+    glUniform3fv(m_shaderTex.getUniform("surface_color"), 1, col);
+}
+
+void DemoBase::shaderTexEnd()
+{
+    m_shaderTex.end();
+}
+
+void DemoBase::shaderBegin(const float *col)
+{
+    m_shader.begin();
+    glUniform1f(m_shader.getUniform("shininess"), 5.0f);
+    glUniform1f(m_shader.getUniform("specular_factor"), 0.2f);
+
+    GLfloat matrix[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+    glUniformMatrix4fv(m_shader.getUniform("modelview_matrix"), 1, GL_FALSE, matrix);
+    GLfloat pmatrix[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, pmatrix);
+    glUniformMatrix4fv(m_shader.getUniform("projection_matrix"), 1, GL_FALSE, pmatrix);
+    glUniform3fv(m_shader.getUniform("surface_color"), 1, col);
+}
+
+void DemoBase::shaderEnd()
+{
+    m_shader.end();
+}
+
+void DemoBase::shaderFlatBegin(const float *col)
+{
+    m_shaderFlat.begin();
+    glUniform1f(m_shaderFlat.getUniform("shininess"), 5.0f);
+    glUniform1f(m_shaderFlat.getUniform("specular_factor"), 0.2f);
+
+    GLfloat matrix[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, matrix);
+    glUniformMatrix4fv(m_shaderFlat.getUniform("modelview_matrix"), 1, GL_FALSE, matrix);
+    GLfloat pmatrix[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, pmatrix);
+    glUniformMatrix4fv(m_shaderFlat.getUniform("projection_matrix"), 1, GL_FALSE, pmatrix);
+    glUniform3fv(m_shaderFlat.getUniform("surface_color"), 1, col);
+}
+
+void DemoBase::shaderFlatEnd()
+{
+    m_shaderFlat.end();
+}
+
+void DemoBase::render()
+{
+    float gridColor[4] = {0.2f, 0.2f, 0.2f, 1.0f};
+    MiniGL::drawGrid_xz(gridColor);
+
+    MiniGL::coordinateSystem();
+
+    // Draw sim model
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    if (model == nullptr)
+    {
+        m_gui->update();
+        return;
+    }
+    SimulationModel::RigidBodyVector &rb = model->getRigidBodies();
+    SimulationModel::ConstraintVector &constraints = model->getConstraints();
+    SimulationModel::RigidBodyContactConstraintVector &rigidBodyContacts = model->getRigidBodyContactConstraints();
+    SimulationModel::ParticleRigidBodyContactConstraintVector &particleRigidBodyContacts = model->getParticleRigidBodyContactConstraints();
+
+    float selectionColor[4] = {0.8f, 0.0f, 0.0f, 1};
+    float surfaceColor[4] = {0.1f, 0.4f, 0.7f, 1};
+    float staticColor[4] = {0.5f, 0.5f, 0.5f, 1};
+
+    if (m_renderContacts)
+    {
+        for (unsigned int i = 0; i < rigidBodyContacts.size(); i++)
+            renderRigidBodyContact(rigidBodyContacts[i]);
+        for (unsigned int i = 0; i < particleRigidBodyContacts.size(); i++)
+            renderParticleRigidBodyContact(particleRigidBodyContacts[i]);
+    }
+
+    for (size_t i = 0; i < rb.size(); i++)
+    {
+        bool selected = false;
+        for (unsigned int j = 0; j < m_selectedBodies.size(); j++)
+        {
+            if (m_selectedBodies[j] == i)
+                selected = true;
+        }
+
+        const VertexData &vd = rb[i]->getGeometry().getVertexData();
+        const IndexedFaceMesh &mesh = rb[i]->getGeometry().getMesh();
+
+        if (mesh.getFlatShading())
+            shaderFlatBegin(staticColor);
+        else
+            shaderBegin(staticColor);
+
+        if (!selected)
+        {
+            if (rb[i]->getMass() == 0.0)
+            {
+                glUniform3fv(m_shader.getUniform("surface_color"), 1, staticColor);
+                Visualization::drawMesh(vd, mesh, 0, staticColor);
+            }
+            else
+            {
+                glUniform3fv(m_shader.getUniform("surface_color"), 1, surfaceColor);
+                Visualization::drawMesh(vd, mesh, 0, surfaceColor);
+            }
+        }
+        else
+        {
+            glUniform3fv(m_shader.getUniform("surface_color"), 1, selectionColor);
+            Visualization::drawMesh(vd, mesh, 0, selectionColor);
+        }
+
+        if (mesh.getFlatShading())
+            shaderFlatEnd();
+        else
+            shaderEnd();
+    }
+
+    renderTriangleModels();
+    renderTetModels();
+
+    for (size_t i = 0; i < constraints.size(); i++)
+    {
+        if (constraints[i]->getTypeId() == BallJoint::TYPE_ID)
+        {
+            renderBallJoint(*(BallJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == BallOnLineJoint::TYPE_ID)
+        {
+            renderBallOnLineJoint(*(BallOnLineJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == HingeJoint::TYPE_ID)
+        {
+            renderHingeJoint(*(HingeJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == UniversalJoint::TYPE_ID)
+        {
+            renderUniversalJoint(*(UniversalJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == SliderJoint::TYPE_ID)
+        {
+            renderSliderJoint(*(SliderJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == TargetAngleMotorHingeJoint::TYPE_ID)
+        {
+            renderTargetAngleMotorHingeJoint(*(TargetAngleMotorHingeJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == TargetVelocityMotorHingeJoint::TYPE_ID)
+        {
+            renderTargetVelocityMotorHingeJoint(*(TargetVelocityMotorHingeJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == TargetPositionMotorSliderJoint::TYPE_ID)
+        {
+            renderTargetPositionMotorSliderJoint(*(TargetPositionMotorSliderJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == TargetVelocityMotorSliderJoint::TYPE_ID)
+        {
+            renderTargetVelocityMotorSliderJoint(*(TargetVelocityMotorSliderJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == RigidBodyParticleBallJoint::TYPE_ID)
+        {
+            renderRigidBodyParticleBallJoint(*(RigidBodyParticleBallJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == RigidBodySpring::TYPE_ID)
+        {
+            renderSpring(*(RigidBodySpring *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == DistanceJoint::TYPE_ID)
+        {
+            renderDistanceJoint(*(DistanceJoint *)constraints[i]);
+        }
+        else if (constraints[i]->getTypeId() == DamperJoint::TYPE_ID)
+        {
+            renderDamperJoint(*(DamperJoint *)constraints[i]);
+        }
+    }
+
+    // DistanceFieldCollisionDetection *cd = (DistanceFieldCollisionDetection *)Simulation::getCurrent()->getTimeStep()->getCollisionDetection();
+    // if (cd && (m_renderSDF || m_renderAABB || (m_renderBVHDepth >= 0) || (m_renderBVHDepthTets >= 0)))
+    // {
+    // std::vector<CollisionDetection::CollisionObject *> &collisionObjects = cd->getCollisionObjects();
+    // for (unsigned int k = 0; k < collisionObjects.size(); k++)
+    // {
+    //     if (m_renderAABB)
+    //         renderAABB(collisionObjects[k]->m_aabb);
+
+    //     if (m_renderSDF)
+    //         renderSDF(collisionObjects[k]);
+
+    //     if (m_renderBVHDepth >= 0)
+    //     {
+    //         if (cd->isDistanceFieldCollisionObject(collisionObjects[k]))
+    //         {
+    //             const PointCloudBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvh;
+
+    //             std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
+    //             { return (int)depth <= m_renderBVHDepth; };
+    //             std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
+    //             {
+    //                 if (depth == m_renderBVHDepth)
+    //                 {
+    //                     const BoundingSphere &bs = bvh.hull(node_index);
+    //                     if (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::RigidBodyCollisionObjectType)
+    //                     {
+    //                         RigidBody *body = rb[collisionObjects[k]->m_bodyIndex];
+    //                         const Vector3r &sphere_x = bs.x();
+    //                         const Vector3r sphere_x_w = body->getRotation() * sphere_x + body->getPosition();
+    //                         MiniGL::drawSphere(sphere_x_w, std::max((float)bs.r(), 0.05f), staticColor);
+    //                     }
+    //                     else
+    //                         MiniGL::drawSphere(bs.x(), std::max((float)bs.r(), 0.05f), staticColor);
+    //                 }
+    //             };
+
+    //             bvh.traverse_depth_first(predicate, cb);
+    //         }
+    //     }
+
+    // if (m_renderBVHDepthTets >= 0)
+    // {
+    //     if (cd->isDistanceFieldCollisionObject(collisionObjects[k]) && (collisionObjects[k]->m_bodyType == CollisionDetection::CollisionObject::TetModelCollisionObjectType))
+    //     {
+
+    //         TetMeshBSH &bvh = ((DistanceFieldCollisionDetection::DistanceFieldCollisionObject *)collisionObjects[k])->m_bvhTets;
+
+    //         std::function<bool(unsigned int, unsigned int)> predicate = [&](unsigned int node_index, unsigned int depth)
+    //         { return (int)depth <= m_renderBVHDepthTets; };
+    //         std::function<void(unsigned int, unsigned int)> cb = [&](unsigned int node_index, unsigned int depth)
+    //         {
+    //             if (depth == m_renderBVHDepthTets)
+    //             {
+    //                 const BoundingSphere &bs = bvh.hull(node_index);
+    //                 const Vector3r &sphere_x = bs.x();
+    //                 MiniGL::drawSphere(sphere_x, std::max((float)bs.r(), 0.05f), staticColor);
+    //             }
+    //         };
+
+    //         bvh.traverse_depth_first(predicate, cb);
+    //     }
+    // }
+    //     }
+    // }
+
+    // const Vector3r refOffset(0, 0, 0);
+    // const ParticleData &pd = model->getParticles();
+    // if (m_renderRefTets || m_renderTets)
+    // {
+    //     shaderBegin(surfaceColor);
+
+    //     for (unsigned int i = 0; i < model->getTetModels().size(); i++)
+    //     {
+    //         const IndexedTetMesh &mesh = model->getTetModels()[i]->getParticleMesh();
+    //         const unsigned int nTets = mesh.numTets();
+    //         const unsigned int *indices = mesh.getTets().data();
+    //         const unsigned int offset = model->getTetModels()[i]->getIndexOffset();
+
+    //         const Vector3r &ix = model->getTetModels()[i]->getInitialX();
+    //         const Matrix3r &R = model->getTetModels()[i]->getInitialR();
+
+    //         for (unsigned int j = 0; j < nTets; j++)
+    //         {
+    //             if (m_renderTets)
+    //             {
+    //                 const Vector3r &x0 = pd.getPosition(indices[4 * j] + offset);
+    //                 const Vector3r &x1 = pd.getPosition(indices[4 * j + 1] + offset);
+    //                 const Vector3r &x2 = pd.getPosition(indices[4 * j + 2] + offset);
+    //                 const Vector3r &x3 = pd.getPosition(indices[4 * j + 3] + offset);
+    //                 MiniGL::drawTetrahedron(x0, x1, x2, x3, surfaceColor);
+    //             }
+    //             if (m_renderRefTets)
+    //             {
+    //                 // 					const Vector3r &x0 = R.transpose() * (pd.getPosition0(indices[4 * j + 0] + offset) - ix);
+    //                 // 					const Vector3r &x1 = R.transpose() * (pd.getPosition0(indices[4 * j + 1] + offset) - ix);
+    //                 // 					const Vector3r &x2 = R.transpose() * (pd.getPosition0(indices[4 * j + 2] + offset) - ix);
+    //                 // 					const Vector3r &x3 = R.transpose() * (pd.getPosition0(indices[4 * j + 3] + offset) - ix);
+    //                 const Vector3r &x0 = pd.getPosition0(indices[4 * j] + offset) + refOffset;
+    //                 const Vector3r &x1 = pd.getPosition0(indices[4 * j + 1] + offset) + refOffset;
+    //                 const Vector3r &x2 = pd.getPosition0(indices[4 * j + 2] + offset) + refOffset;
+    //                 const Vector3r &x3 = pd.getPosition0(indices[4 * j + 3] + offset) + refOffset;
+
+    //                 MiniGL::drawTetrahedron(x0, x1, x2, x3, staticColor);
+    //             }
+    //         }
+    //     }
+    //     shaderEnd();
+    // }
+
+    // float red[4] = {0.8f, 0.0f, 0.0f, 1};
+    // for (unsigned int j = 0; j < m_selectedParticles.size(); j++)
+    // {
+    //     MiniGL::drawSphere(pd.getPosition(m_selectedParticles[j]), 0.08f, red);
+    // }
+
+    // m_gui->update();
+}
+
+void DemoBase::renderTriangleModels()
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const ParticleData &pd = model->getParticles();
+    float surfaceColor[4] = {0.8f, 0.9f, 0.2f, 1};
+
+    shaderTexBegin(surfaceColor);
+
+    for (unsigned int i = 0; i < model->getTriangleModels().size(); i++)
+    {
+        // mesh
+        const IndexedFaceMesh &mesh = model->getTriangleModels()[i]->getParticleMesh();
+        const unsigned int offset = model->getTriangleModels()[i]->getIndexOffset();
+        Visualization::drawTexturedMesh(pd, mesh, offset, surfaceColor);
+    }
+
+    shaderTexEnd();
+}
+
+void DemoBase::renderTetModels()
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const ParticleData &pd = model->getParticles();
+    float surfaceColor[4] = {0.1f, 0.4f, 0.7f, 1};
+
+    shaderBegin(surfaceColor);
+
+    for (unsigned int i = 0; i < model->getTetModels().size(); i++)
+    {
+        const VertexData &vdVis = model->getTetModels()[i]->getVisVertices();
+        if (vdVis.size() > 0)
+        {
+            const IndexedFaceMesh &visMesh = model->getTetModels()[i]->getVisMesh();
+            Visualization::drawMesh(vdVis, visMesh, 0, surfaceColor);
+        }
+        else
+        {
+            const IndexedFaceMesh &surfaceMesh = model->getTetModels()[i]->getSurfaceMesh();
+            const unsigned int offset = model->getTetModels()[i]->getIndexOffset();
+            Visualization::drawMesh(pd, surfaceMesh, offset, surfaceColor);
+        }
+    }
+
+    shaderEnd();
+}
+
+void DemoBase::renderBallJoint(BallJoint &bj)
+{
+    MiniGL::drawSphere(bj.m_jointInfo.col(2), 0.15f, m_jointColor);
+}
+
+void DemoBase::renderRigidBodyParticleBallJoint(RigidBodyParticleBallJoint &bj)
+{
+    MiniGL::drawSphere(bj.m_jointInfo.col(1), 0.1f, m_jointColor);
+}
+
+void DemoBase::renderBallOnLineJoint(BallOnLineJoint &bj)
+{
+    MiniGL::drawSphere(bj.m_jointInfo.col(5), 0.1f, m_jointColor);
+    MiniGL::drawCylinder(bj.m_jointInfo.col(5) - bj.m_jointInfo.col(7), bj.m_jointInfo.col(5) + bj.m_jointInfo.col(7), m_jointColor, 0.05f);
+}
+
+void DemoBase::renderHingeJoint(HingeJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    const Vector3r &c = joint.m_jointInfo.block<3, 1>(0, 4);
+    const Vector3r &axis_local = joint.m_jointInfo.block<3, 1>(0, 6);
+    const Vector3r axis = rb->getRotation().matrix() * axis_local;
+
+    MiniGL::drawSphere(c - 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawSphere(c + 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - 0.5 * axis, c + 0.5 * axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderUniversalJoint(UniversalJoint &uj)
+{
+    MiniGL::drawSphere(uj.m_jointInfo.col(4) - 0.5 * uj.m_jointInfo.col(6), 0.1f, m_jointColor);
+    MiniGL::drawSphere(uj.m_jointInfo.col(4) + 0.5 * uj.m_jointInfo.col(6), 0.1f, m_jointColor);
+    MiniGL::drawSphere(uj.m_jointInfo.col(5) - 0.5 * uj.m_jointInfo.col(7), 0.1f, m_jointColor);
+    MiniGL::drawSphere(uj.m_jointInfo.col(5) + 0.5 * uj.m_jointInfo.col(7), 0.1f, m_jointColor);
+    MiniGL::drawCylinder(uj.m_jointInfo.col(4) - 0.5 * uj.m_jointInfo.col(6), uj.m_jointInfo.col(4) + 0.5 * uj.m_jointInfo.col(6), m_jointColor, 0.05f);
+    MiniGL::drawCylinder(uj.m_jointInfo.col(5) - 0.5 * uj.m_jointInfo.col(7), uj.m_jointInfo.col(5) + 0.5 * uj.m_jointInfo.col(7), m_jointColor, 0.05f);
+}
+
+void DemoBase::renderSliderJoint(SliderJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    Quaternionr qR0;
+    qR0.coeffs() = joint.m_jointInfo.col(1);
+    const Vector3r &c = rb->getPosition();
+    Vector3r axis = qR0.matrix().col(0);
+    MiniGL::drawSphere(c, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - axis, c + axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderTargetPositionMotorSliderJoint(TargetPositionMotorSliderJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    const Vector3r &c = rb->getPosition();
+    Vector3r axis = joint.m_jointInfo.block<3, 1>(0, 1);
+    MiniGL::drawSphere(c, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - axis, c + axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderTargetVelocityMotorSliderJoint(TargetVelocityMotorSliderJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    Quaternionr qR0;
+    qR0.coeffs() = joint.m_jointInfo.col(1);
+    const Vector3r &c = rb->getPosition();
+    Vector3r axis = qR0.matrix().col(0);
+    MiniGL::drawSphere(c, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - axis, c + axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderTargetAngleMotorHingeJoint(TargetAngleMotorHingeJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    const Vector3r &c = joint.m_jointInfo.block<3, 1>(0, 5);
+    const Vector3r &axis_local = joint.m_jointInfo.block<3, 1>(0, 7);
+    const Vector3r axis = rb->getRotation().matrix() * axis_local;
+
+    MiniGL::drawSphere(c - 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawSphere(c + 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - 0.5 * axis, c + 0.5 * axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderTargetVelocityMotorHingeJoint(TargetVelocityMotorHingeJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    const Vector3r &c = joint.m_jointInfo.block<3, 1>(0, 5);
+    const Vector3r axis = joint.m_jointInfo.block<3, 1>(0, 7);
+
+    MiniGL::drawSphere(c - 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawSphere(c + 0.5 * axis, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - 0.5 * axis, c + 0.5 * axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::renderRigidBodyContact(RigidBodyContactConstraint &cc)
+{
+    float col1[4] = {0.0f, 0.6f, 0.2f, 1};
+    float col2[4] = {0.6f, 0.0f, 0.2f, 1};
+    MiniGL::drawPoint(cc.m_constraintInfo.col(0), 5.0f, col1);
+    MiniGL::drawPoint(cc.m_constraintInfo.col(1), 5.0f, col2);
+    MiniGL::drawVector(cc.m_constraintInfo.col(1), cc.m_constraintInfo.col(1) + cc.m_constraintInfo.col(2), 1.0f, col2);
+}
+
+void DemoBase::renderParticleRigidBodyContact(ParticleRigidBodyContactConstraint &cc)
+{
+    float col1[4] = {0.0f, 0.6f, 0.2f, 1};
+    float col2[4] = {0.6f, 0.0f, 0.2f, 1};
+    MiniGL::drawPoint(cc.m_constraintInfo.col(0), 5.0f, col1);
+    MiniGL::drawPoint(cc.m_constraintInfo.col(1), 5.0f, col2);
+    MiniGL::drawVector(cc.m_constraintInfo.col(1), cc.m_constraintInfo.col(1) + cc.m_constraintInfo.col(2), 1.0f, col2);
+}
+
+void DemoBase::renderSpring(RigidBodySpring &s)
+{
+    MiniGL::drawSphere(s.m_jointInfo.col(2), 0.1f, m_jointColor);
+    MiniGL::drawSphere(s.m_jointInfo.col(3), 0.1f, m_jointColor);
+    MiniGL::drawCylinder(s.m_jointInfo.col(2), s.m_jointInfo.col(3), m_jointColor, 0.05f);
+}
+
+void DemoBase::renderDistanceJoint(DistanceJoint &j)
+{
+    MiniGL::drawSphere(j.m_jointInfo.col(2), 0.1f, m_jointColor);
+    MiniGL::drawSphere(j.m_jointInfo.col(3), 0.1f, m_jointColor);
+    MiniGL::drawCylinder(j.m_jointInfo.col(2), j.m_jointInfo.col(3), m_jointColor, 0.05f);
+}
+
+void DemoBase::renderDamperJoint(DamperJoint &joint)
+{
+    SimulationModel *model = Simulation::getCurrent()->getModel();
+    const SimulationModel::RigidBodyVector &rigidBodies = model->getRigidBodies();
+    RigidBody *rb = rigidBodies[joint.m_bodies[0]];
+
+    Quaternionr qR0;
+    qR0.coeffs() = joint.m_jointInfo.col(1);
+    const Vector3r &c = rb->getPosition();
+    Vector3r axis = qR0.matrix().col(0);
+    MiniGL::drawSphere(c, 0.1f, m_jointColor);
+    MiniGL::drawCylinder(c - axis, c + axis, m_jointColor, 0.05f);
+}
+
+void DemoBase::reset()
+{
+    m_nextFrameTime = 0.0;
+    m_frameCounter = 1;
 }

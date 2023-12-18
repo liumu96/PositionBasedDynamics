@@ -68,9 +68,39 @@ void SimulationModel::initParameters()
     // todo
 }
 
+SimulationModel::RigidBodyVector &SimulationModel::getRigidBodies()
+{
+    return m_rigidBodies;
+}
+
 ParticleData &SimulationModel::getParticles()
 {
     return m_particles;
+}
+
+SimulationModel::TriangleModelVector &SimulationModel::getTriangleModels()
+{
+    return m_triangleModels;
+}
+
+SimulationModel::TetModelVector &SimulationModel::getTetModels()
+{
+    return m_tetModels;
+}
+
+SimulationModel::ConstraintVector &SimulationModel::getConstraints()
+{
+    return m_constraints;
+}
+
+SimulationModel::RigidBodyContactConstraintVector &SimulationModel::getRigidBodyContactConstraints()
+{
+    return m_rigidBodyContactConstraints;
+}
+
+SimulationModel::ParticleRigidBodyContactConstraintVector &SimulationModel::getParticleRigidBodyContactConstraints()
+{
+    return m_particleRigidBodyContactConstraints;
 }
 
 void SimulationModel::addTriangleModel(

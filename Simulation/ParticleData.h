@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include "Common/Common.h"
 
 namespace PBD
@@ -10,6 +11,24 @@ namespace PBD
      */
     class VertexData
     {
+    private:
+        std::vector<Vector3r> m_x;
+
+    public:
+        FORCE_INLINE Vector3r &getPosition(const unsigned int i)
+        {
+            return m_x[i];
+        }
+
+        FORCE_INLINE const Vector3r &getPosition(const unsigned int i) const
+        {
+            return m_x[i];
+        }
+
+        FORCE_INLINE unsigned int size() const
+        {
+            return (unsigned int)m_x.size();
+        }
     };
 
     /**

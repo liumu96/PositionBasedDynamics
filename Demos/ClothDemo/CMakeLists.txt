@@ -7,6 +7,7 @@ if(WIN32)
 else()
   set(OpenGL_GL_PREFERENCE GLVND)
   find_package(OpenGL REQUIRED)
+  message(DIRS ${OPENGL_INCLUDE_DIRS})
   include_directories( ${OPENGL_INCLUDE_DIRS})
 
   set(SIMULATION_LINK_LIBRARIES

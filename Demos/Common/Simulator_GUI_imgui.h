@@ -44,6 +44,10 @@ namespace PBD
     protected:
         DemoBase *m_base;
 
+        std::vector<ImFont *> m_fonts;
+        std::vector<ImFont *> m_fonts2;
+        std::vector<float> m_scales;
+
         unsigned int m_currentScaleIndex;
         bool m_vsync;
         bool m_showLogWindow;
@@ -55,14 +59,28 @@ namespace PBD
         bool m_iniFound;
 
         LogWindow *m_logWindow;
+        const float m_baseSize = 15.0f;
+
+        void initStyle();
+
+        void switchPause();
+        static void switchDrawMode();
+
+        void destroy();
 
         static void writeIni(ImGuiContext *ctx, ImGuiSettingsHandler *handler, ImGuiTextBuffer *out_buf);
         static void readIni(ImGuiContext *ctx, ImGuiSettingsHandler *handler, void *entry, const char *line);
         static void *readOpenIni(ImGuiContext *ctx, ImGuiSettingsHandler *handler, const char *name);
         static void applySettings(ImGuiContext *ctx, ImGuiSettingsHandler *handler);
+        bool alignedButton(const char *label, float alignment = 0.5f);
+        void createMenuBar();
 
     public:
         void init();
+        void initImgui();
+
+        void update();
+        void createSimulationParameterGUI();
 
         bool getVSync() { return m_userSettings.vsync; }
         bool getMaximized() { return m_userSettings.maximized; }

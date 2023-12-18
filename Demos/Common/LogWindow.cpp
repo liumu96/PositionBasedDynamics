@@ -66,13 +66,13 @@ void LogWindow::drawWindow(ImFont *textFont)
         for (size_t i = 0; i < buffer.size(); i++)
         {
             if ((m_selectedFilter == 0) && (buffer[i].first == LogLevel::DEBUG))
-                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), buffer[i].second.c_str());
+                ImGui::TextColored(ImVec4(0.4f, 1.0f, 0.4f, 1.0f), "%s", buffer[i].second.c_str());
             else if ((m_selectedFilter <= 1) && (buffer[i].first == LogLevel::INFO))
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), buffer[i].second.c_str());
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "%s", buffer[i].second.c_str());
             else if ((m_selectedFilter <= 2) && (buffer[i].first == LogLevel::WARN))
-                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), buffer[i].second.c_str());
+                ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "%s", buffer[i].second.c_str());
             else if ((m_selectedFilter <= 3) && (buffer[i].first == LogLevel::ERR))
-                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), buffer[i].second.c_str());
+                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%s", buffer[i].second.c_str());
         }
         ImGui::PopFont();
         // if there are new lines, scroll to bottom

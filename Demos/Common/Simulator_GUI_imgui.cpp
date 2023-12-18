@@ -1,11 +1,15 @@
 #include "Simulator_GUI_imgui.h"
 #include "Demos/Visualization/MiniGL.h"
 #include "DemoBase.h"
+#include "imguiParameters.h"
+#include "Utils/FileSystem.h"
 
 #include "LogWindow.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "backends/imgui_impl_glfw.h"
+#include "backends/imgui_impl_opengl3.h"
 
 using namespace PBD;
 
@@ -47,6 +51,24 @@ void Simulator_GUI_imgui::init()
     (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
     ImGui::LoadIniSettingsFromDisk(io.IniFilename);
+}
+
+void Simulator_GUI_imgui::initStyle()
+{
+    m_context->Style = ImGuiStyle();
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle *style = &ImGui::GetStyle();
+    ImVec4 *colors = style->Colors;
+    colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.1f, 0.1f, 0.1f, 1.0f);
+    style->FrameBorderSize = 0.5f;
+    style->FrameRounding = 3.0f;
+    style->TabBorderSize = 1.0f;
+    style->WindowRounding = 6.0f;
+    style->ScaleAllSizes(1);
 }
 
 void *Simulator_GUI_imgui::readOpenIni(ImGuiContext *ctx, ImGuiSettingsHandler *handler, const char *name)
@@ -123,4 +145,255 @@ void Simulator_GUI_imgui::applySettings(ImGuiContext *ctx, ImGuiSettingsHandler 
     gui->m_showLogWindow = settings->show_log_window;
     gui->m_iniFound = true;
     gui->m_logWindow->setSelectedFilter(settings->log_filter);
+}
+
+void Simulator_GUI_imgui::initImgui()
+{
+    MiniGL::addKeyboardFunc([](int key, int scancode, int action, int mods) -> bool
+                            { ImGui_ImplGlfw_KeyCallback(MiniGL::getWindow(), key, scancode, action, mods); return ImGui::GetIO().WantCaptureKeyboard; });
+    MiniGL::addCharFunc([](int key, int action) -> bool
+                        { ImGui_ImplGlfw_CharCallback(MiniGL::getWindow(), key); return ImGui::GetIO().WantCaptureKeyboard; });
+    MiniGL::addMousePressFunc([](int button, int action, int mods) -> bool
+                              { ImGui_ImplGlfw_MouseButtonCallback(MiniGL::getWindow(), button, action, mods); return ImGui::GetIO().WantCaptureMouse; });
+    MiniGL::addMouseWheelFunc([](int pos, double xoffset, double yoffset) -> bool
+                              { ImGui_ImplGlfw_ScrollCallback(MiniGL::getWindow(), xoffset, yoffset); return ImGui::GetIO().WantCaptureMouse; });
+
+    MiniGL::addKeyFunc('r', std::bind(&DemoBase::reset, m_base));
+    MiniGL::addKeyFunc('w', Simulator_GUI_imgui::switchDrawMode);
+    MiniGL::addKeyFunc(' ', std::bind(&Simulator_GUI_imgui::switchPause, this));
+    MiniGL::setClientDestroyFunc(std::bind(&Simulator_GUI_imgui::destroy, this));
+
+    // apply user settings from ini file
+    if (m_iniFound)
+    {
+        MiniGL::setWindowPos(m_userSettings.win_x, m_userSettings.win_y);
+        MiniGL::setWindowSize(m_userSettings.win_width, m_userSettings.win_height);
+    }
+
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+
+    std::string font = Utilities::FileSystem::normalizePath(m_base->getExePath() + "/resources/fonts/Roboto-Medium.ttf");
+    std::string font2 = Utilities::FileSystem::normalizePath(m_base->getExePath() + "/resources/fonts/Cousine-Regular.ttf");
+
+    m_scales.push_back(1.0f);
+    m_scales.push_back(1.25f);
+    m_scales.push_back(1.5f);
+    m_scales.push_back(1.75f);
+    m_scales.push_back(2.0f);
+
+    for (int i = 0; i < 5; i++)
+        m_fonts.push_back(io.Fonts->AddFontFromFileTTF(font.c_str(), m_baseSize * m_scales[i]));
+    for (int i = 0; i < 5; i++)
+        m_fonts2.push_back(io.Fonts->AddFontFromFileTTF(font2.c_str(), m_baseSize * m_scales[i]));
+
+    initStyle();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForOpenGL(MiniGL::getWindow(), false);
+    const char *glsl_version = "#version 330";
+    ImGui_ImplOpenGL3_Init(glsl_version);
+}
+
+bool Simulator_GUI_imgui::alignedButton(const char *label, float alignment)
+{
+    ImGuiStyle &style = ImGui::GetStyle();
+
+    const float size = ImGui::CalcTextSize(label).x + style.FramePadding.x * 2.0f;
+    const float avail = ImGui::GetContentRegionAvail().x;
+
+    const float offset = (avail - size) * alignment;
+    if (offset > 0.0f)
+        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + offset);
+
+    return ImGui::Button(label);
+}
+
+void Simulator_GUI_imgui::createMenuBar()
+{
+    bool openpopup = false;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 10.0f));
+
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("Simulation"))
+        {
+            if (ImGui::MenuItem("Pause/run simulation", "Space"))
+                switchPause();
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("GUI"))
+        {
+            if (ImGui::MenuItem("V-Sync", "", m_vsync))
+            {
+                m_vsync = !m_vsync;
+                openpopup = true;
+            }
+            if (ImGui::MenuItem("Scale - 100%", "", m_currentScaleIndex == 0))
+            {
+                m_currentScaleIndex = 0;
+                initStyle();
+            }
+            if (ImGui::MenuItem("Scale - 125%", "", m_currentScaleIndex == 1))
+            {
+                m_currentScaleIndex = 1;
+                initStyle();
+            }
+            if (ImGui::MenuItem("Scale - 150%", "", m_currentScaleIndex == 2))
+            {
+                m_currentScaleIndex = 2;
+                initStyle();
+            }
+            if (ImGui::MenuItem("Scale - 175%", "", m_currentScaleIndex == 3))
+            {
+                m_currentScaleIndex = 3;
+                initStyle();
+            }
+            if (ImGui::MenuItem("Scale - 200%", "", m_currentScaleIndex == 4))
+            {
+                m_currentScaleIndex = 4;
+                initStyle();
+            }
+            ImGui::Separator();
+            if (ImGui::MenuItem("Show log window", "", m_showLogWindow))
+            {
+                m_showLogWindow = !m_showLogWindow;
+            }
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    ImGui::PopStyleVar(1);
+
+    if (openpopup)
+    {
+        ImGui::OpenPopup("Info");
+        openpopup = false;
+    }
+    bool open = true;
+    ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(5.0f, 5.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.5f, 0.5f));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(5.0f, 15.0f));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(10.0f, 10.0f));
+    if (ImGui::BeginPopupModal("Info", &open, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::Text("To turn on/off the vertical sync, \nyou have to restart the simulator.");
+        if (alignedButton("Close"))
+            ImGui::CloseCurrentPopup();
+        ImGui::EndPopup();
+    }
+    ImGui::PopStyleVar(4);
+}
+
+void Simulator_GUI_imgui::createSimulationParameterGUI()
+{
+    ImGui::SetNextWindowPos(ImVec2(10, 10), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(390, 900), ImGuiCond_FirstUseEver);
+
+    float alpha = 0.8f;
+    if (ImGui::IsWindowDocked())
+        alpha = 1.0f;
+
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.15f, 0.15f, 0.15f, alpha));
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(5.0f, 10.0f));
+    ImGui::Begin("Settings");
+
+    ImGui::PushItemWidth(175 * m_scales[m_currentScaleIndex]);
+
+    imguiParameters::createParameterGUI();
+
+    ImGui::PopItemWidth();
+    ImGui::End();
+    ImGui::PopStyleVar(1);
+    ImGui::PopStyleColor(1);
+
+    if (m_showLogWindow)
+        m_logWindow->drawWindow(m_fonts2[m_currentScaleIndex]);
+}
+
+void Simulator_GUI_imgui::update()
+{
+    // Start the Dear ImGui frame
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // init dock space
+    static ImGuiDockNodeFlags dockspaceFlags = ImGuiDockNodeFlags_PassthruCentralNode | ImGuiDockNodeFlags_NoDockingInCentralNode | ImGuiDockNodeFlags_AutoHideTabBar;
+    ImGuiWindowFlags windowFlags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+    ImGuiViewport *viewport = ImGui::GetMainViewport();
+
+    // add enough space for the menubar
+    ImVec2 pos = viewport->Pos;
+    ImVec2 size = viewport->Size;
+    size.y -= m_baseSize * m_scales[m_currentScaleIndex];
+    pos.y += m_baseSize * m_scales[m_currentScaleIndex];
+
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(size);
+    ImGui::SetNextWindowViewport(viewport->ID);
+    windowFlags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+    windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    if (dockspaceFlags & ImGuiDockNodeFlags_PassthruCentralNode)
+        windowFlags |= ImGuiWindowFlags_NoBackground;
+
+    ImGui::PushFont(m_fonts[m_currentScaleIndex]);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("DockSpace", nullptr, windowFlags);
+
+    ImGuiID dockspaceID = ImGui::GetID("DockSpace");
+    ImGui::DockSpace(dockspaceID, ImVec2(0.0f, 0.0f), dockspaceFlags);
+    static int first = true;
+    if (!m_iniFound && first)
+    {
+        first = false;
+        ImGui::DockBuilderRemoveNode(dockspaceID);
+        ImGui::DockBuilderAddNode(dockspaceID, dockspaceFlags | ImGuiDockNodeFlags_DockSpace);
+        ImGui::DockBuilderSetNodeSize(dockspaceID, viewport->Size);
+
+        auto dock_id_down = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Down, 0.3f, nullptr, &dockspaceID);
+        auto dock_id_left = ImGui::DockBuilderSplitNode(dockspaceID, ImGuiDir_Left, 0.3f, nullptr, &dockspaceID);
+        ImGui::DockBuilderDockWindow("Settings", dock_id_left);
+        ImGui::DockBuilderDockWindow("Log", dock_id_down);
+
+        ImGui::DockBuilderFinish(dockspaceID);
+    }
+
+    ImGui::End();
+    ImGui::PopStyleVar(3);
+
+    createMenuBar();
+
+    createSimulationParameterGUI();
+    ImGui::PopFont();
+
+    // Rendering
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+void Simulator_GUI_imgui::destroy()
+{
+    // Cleanup
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void Simulator_GUI_imgui::switchPause()
+{
+    m_base->setValue(DemoBase::PAUSE, !m_base->getValue<bool>(DemoBase::PAUSE));
+}
+
+void Simulator_GUI_imgui::switchDrawMode()
+{
+    if (MiniGL::getDrawMode() == GL_LINE)
+        MiniGL::setDrawMode(GL_FILL);
+    else
+        MiniGL::setDrawMode(GL_LINE);
 }
