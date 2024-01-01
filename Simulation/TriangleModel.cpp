@@ -2,9 +2,20 @@
 
 using namespace PBD;
 
-unsigned int TriangleModel::getIndexOffset() const
+TriangleModel::TriangleModel() : m_particleMesh()
 {
-    return m_indexOffset;
+    m_restitutionCoeff = static_cast<Real>(0.6);
+    m_frictionCoeff = static_cast<Real>(0.2);
+}
+
+TriangleModel::~TriangleModel(void)
+{
+    cleanupModel();
+}
+
+void TriangleModel::cleanupModel()
+{
+    m_particleMesh.release();
 }
 
 void TriangleModel::updateMeshNormals(const ParticleData &pd)
@@ -13,7 +24,13 @@ void TriangleModel::updateMeshNormals(const ParticleData &pd)
     m_particleMesh.updateVertexNormals(pd);
 }
 
-void TriangleModel::initMesh(const unsigned int nPoints, const unsigned int nFaces, const unsigned int indexOffset, unsigned int *indices, const ParticleMesh::UVIndices &uvIndices, const ParticleMesh::UVs &uvs)
+void TriangleModel::initMesh(
+    const unsigned int nPoints,
+    const unsigned int nFaces,
+    const unsigned int indexOffset,
+    unsigned int *indices,
+    const ParticleMesh::UVIndices &uvIndices,
+    const ParticleMesh::UVs &uvs)
 {
     m_indexOffset = indexOffset;
     m_particleMesh.release();
@@ -26,4 +43,9 @@ void TriangleModel::initMesh(const unsigned int nPoints, const unsigned int nFac
     }
     m_particleMesh.copyUVs(uvIndices, uvs);
     m_particleMesh.buildNeighbors();
+}
+
+unsigned int TriangleModel::getIndexOffset() const
+{
+    return m_indexOffset;
 }
