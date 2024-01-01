@@ -2,6 +2,65 @@
 
 using namespace Utilities;
 
+IndexedFaceMesh &IndexedFaceMesh::operator=(IndexedFaceMesh const &other)
+{
+    m_numPoints = other.m_numPoints;
+    m_indices = other.m_indices;
+    m_edges = other.m_edges;
+    m_facesEdges = other.m_facesEdges;
+    m_closed = other.m_closed;
+    m_uvIndices = other.m_uvIndices;
+    m_uvs = other.m_uvs;
+    m_normals = other.m_normals;
+    m_vertexNormals = other.m_vertexNormals;
+
+    for (size_t i = 0; i < m_facesEdges.size(); i++)
+    {
+        m_facesEdges[i].resize(m_verticesPerFace);
+#if defined(_MSC_VER)
+        std::copy(other.m_facesEdges[i].data(), other.m_facesEdges[i].data() + m_verticesPerFace,
+                  stdext::unchecked_array_iterator<unsigned int *>(m_facesEdges[i].data()));
+#else
+        std::copy(other.m_facesEdges[i].data(), other.m_facesEdges[i].data() + m_verticesPerFace, m_facesEdges[i].data());
+#endif
+    }
+
+    m_verticesEdges.resize(other.m_verticesEdges.size());
+    for (size_t i = 0; i < m_verticesEdges.size(); i++)
+    {
+        m_verticesEdges[i] = other.m_verticesEdges[i];
+    }
+    m_verticesFaces.resize(other.m_verticesFaces.size());
+    for (size_t i = 0; i < m_verticesFaces.size(); i++)
+    {
+        m_verticesFaces[i] = other.m_verticesFaces[i];
+    }
+
+    return *this;
+}
+
+IndexedFaceMesh::IndexedFaceMesh(IndexedFaceMesh const &other)
+{
+    *this = other;
+}
+
+IndexedFaceMesh::IndexedFaceMesh()
+{
+    m_closed = false;
+    m_flatShading = false;
+    m_numPoints = 0;
+}
+
+IndexedFaceMesh::~IndexedFaceMesh()
+{
+    release();
+}
+
+bool IndexedFaceMesh::isClosed() const
+{
+    return m_closed;
+}
+
 void IndexedFaceMesh::initMesh(const unsigned int nPoints, const unsigned int nEdges, const unsigned int nFaces)
 {
     m_numPoints = nPoints;
@@ -35,17 +94,31 @@ void IndexedFaceMesh::release()
  */
 void IndexedFaceMesh::addFace(const unsigned int *const indices)
 {
-    for (unsigned int i = 0u; i < m_verticesPerFace; i++)
+    for (unsigned int i = 0; i < m_verticesPerFace; i++)
+    {
         m_indices.push_back(indices[i]);
+    }
 }
 
-/**
- * Add a new face. Indices must be an array of size m_verticesPerFace.
- */
 void IndexedFaceMesh::addFace(const int *const indices)
 {
-    for (unsigned int i = 0u; i < m_verticesPerFace; i++)
+    for (unsigned int i = 0; i < m_verticesPerFace; i++)
+    {
         m_indices.push_back((unsigned int)indices[i]);
+    }
+}
+
+void IndexedFaceMesh::addUV(const Real u, const Real v)
+{
+    Vector2r uv;
+    uv[0] = u;
+    uv[1] = v;
+    m_uvs.push_back(uv);
+}
+
+void IndexedFaceMesh::addUVIndex(const unsigned int index)
+{
+    m_uvIndices.push_back(index);
 }
 
 void IndexedFaceMesh::buildNeighbors()
@@ -66,6 +139,7 @@ void IndexedFaceMesh::buildNeighbors()
 
     unsigned int *v = new unsigned int[m_verticesPerFace];
     unsigned int *edges = new unsigned int[m_verticesPerFace * 2];
+
     for (unsigned int i = 0; i < numFaces(); i++)
     {
         m_facesEdges[i].resize(m_verticesPerFace);
@@ -175,4 +249,9 @@ void IndexedFaceMesh::copyUVs(const UVIndices &uvIndices, const UVs &uvs)
     {
         m_uvIndices[i] = uvIndices[i];
     }
+}
+
+unsigned int IndexedFaceMesh::getVerticesPerFace() const
+{
+    return m_verticesPerFace;
 }

@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Common/Common.h"
+#include <array>
+#include <vector>
+#include <iterator>
 
 namespace Utilities
 {
@@ -40,26 +43,42 @@ namespace Utilities
         bool m_flatShading;
 
     public:
+        IndexedFaceMesh();
+        IndexedFaceMesh(IndexedFaceMesh const &other);
+        IndexedFaceMesh &operator=(IndexedFaceMesh const &other);
+        ~IndexedFaceMesh();
+
         void release();
-
+        bool isClosed() const;
         bool getFlatShading() const { return m_flatShading; }
-
+        void setFlatShading(const bool v) { m_flatShading = v; }
         void initMesh(const unsigned int nPoints, const unsigned int nEdges, const unsigned int nFaces);
         void addFace(const unsigned int *const indices);
         void addFace(const int *const indices);
+        void addUV(const Real u, const Real v);
+        void addUVIndex(const unsigned int index);
 
         const Faces &getFaces() const { return m_indices; }
         Faces &getFaces() { return m_indices; }
-
+        const FaceNormals &getFaceNormals() const { return m_normals; }
+        FaceNormals &getFaceNormals() { return m_normals; }
         const VertexNormals &getVertexNormals() const { return m_vertexNormals; }
         VertexNormals &getVertexNormals() { return m_vertexNormals; }
-
+        Edges &getEdges() { return m_edges; }
+        const Edges &getEdges() const { return m_edges; }
+        const FacesEdges &getFacesEdges() const { return m_facesEdges; }
+        const UVIndices &getUVIndices() const { return m_uvIndices; }
         const UVs &getUVs() const { return m_uvs; }
+        const VerticesFaces &getVertexFaces() const { return m_verticesFaces; }
+        const VerticesEdges &getVertexEdges() const { return m_verticesEdges; }
 
         unsigned int numVertices() const { return m_numPoints; }
         unsigned int numFaces() const { return (unsigned int)m_indices.size() / m_verticesPerFace; }
+        unsigned int numEdges() const { return (unsigned int)m_edges.size(); }
+        unsigned int numUVs() const { return (unsigned int)m_uvs.size(); }
 
         void copyUVs(const UVIndices &uvIndices, const UVs &uvs);
+
         void buildNeighbors();
 
         template <class PositionData>
@@ -67,6 +86,8 @@ namespace Utilities
 
         template <class PositionData>
         void updateVertexNormals(const PositionData &pd);
+
+        unsigned int getVerticesPerFace() const;
     };
 
     template <class PositionData>
@@ -92,7 +113,9 @@ namespace Utilities
                 m_normals[i].normalize();
                 // fix normals of degenerate triangles that can become zero vectors
                 if (m_normals[i].squaredNorm() < 1e-6f)
+                {
                     m_normals[i] = Vector3r::UnitX();
+                }
             }
         }
     }
@@ -107,7 +130,7 @@ namespace Utilities
             m_vertexNormals[i].setZero();
         }
 
-        for (unsigned int i = 0u; i < numFaces(); i++)
+        for (unsigned int i = 0; i < numFaces(); i++)
         {
             const Vector3r &n = m_normals[i];
             m_vertexNormals[m_indices[m_verticesPerFace * i]] += n;
