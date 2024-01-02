@@ -8,6 +8,7 @@ namespace Utilities
 {
     class IndexedTetMesh
     {
+    public:
         struct Edge
         {
             std::array<unsigned int, 2> m_vert;
